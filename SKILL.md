@@ -1,9 +1,11 @@
 ---
 name: layer-rebuild
-description: Extract requested objects from an image into a layered PSD, with optional background repair, preview PNG, and SVG extraction. Use for image layer rebuilding, product image cutouts, or PSD decomposition.
+description: Extract requested objects from an image into a layered PSD, with optional background repair, preview PNG, and SVG extraction. Use to prepare flattened artwork for print-file edits, rebuild image layers, extract product cutouts, or decompose an image into PSD layers.
 ---
 
 # Layer Rebuild (Alpha)
+
+Help users modify print artwork when only a flattened image is available, by extracting layers for subsequent layout and content edits. Inputs are raster images; PDF/AI artwork needs a separate conversion step. The exported PSD is an editing starting point; print delivery still requires checking dimensions, resolution, bleed, and color mode.
 
 Use the Python engine beside this SKILL.md. Resolve its directory from the loaded skill location; never assume the user's working directory is the engine directory. Store source images, recipes, and outputs in the user's project or a dedicated writable task directory, using absolute paths in recipes.
 
