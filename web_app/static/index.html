@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Local alpha for reconstructing a flat image into editable layers.">
+    <title>Layer Rebuild — Local alpha</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header class="masthead">
+        <p class="eyebrow">LOCAL ALPHA · IMAGE TO EDITABLE LAYERS</p>
+        <h1>Layer<br><em>Rebuild.</em></h1>
+        <p class="lede">Reconstruct a draft layer stack. Inspect each layer before exporting.</p>
+        <p class="privacy-note">Local alpha: automatic grouping is not yet full object separation. Cloud segmentation and background fill each require explicit consent. A job link can reopen inspection until the server restarts; files remain on this machine.</p>
+      </header>
+
+      <section class="workspace" aria-label="Layer Rebuild workspace">
+        <div class="step-card upload-card" id="upload-card">
+          <div class="step-number">01</div>
+          <div>
+            <p class="card-kicker">SOURCE IMAGE</p>
+            <h2>Start with a flat image.</h2>
+            <p>JPG, PNG, or WebP · maximum 20 MB / 30 megapixels</p>
+          </div>
+          <button class="upload-control" id="choose-image" type="button">Choose image</button>
+          <input class="file-input" id="image-input" type="file" accept="image/jpeg,image/png,image/webp">
+          <p class="file-name" id="file-name" aria-live="polite">No image selected</p>
+        </div>
+
+        <div class="step-card preview-card is-hidden" id="preview-card">
+          <div class="step-number">02</div>
+          <div>
+            <p class="card-kicker">LAYER PLAN</p>
+            <h2>Review the automatic layer plan.</h2>
+            <p>The goal is all individual objects and all text. This alpha only finds some text and foreground groups automatically. Optional names emphasise must-separate items; inspect and correct omissions before accepting a draft.</p>
+          </div>
+          <div class="preview-grid">
+            <img id="source-preview" alt="Selected source image preview">
+            <div class="plan-panel">
+              <div class="auto-plan" id="auto-plan" aria-live="polite"></div>
+              <label for="layer-prompts">Must-separate items <span class="optional">Optional</span></label>
+              <textarea id="layer-prompts" rows="4" placeholder="tall iced coffee glass&#10;short latte glass&#10;coffee bean bowl"></textarea>
+              <p class="field-note">Your entries are locked requirements: if one cannot be extracted, the tool will stop instead of exporting a misleading PSD.</p>
+              <label class="consent is-hidden" id="cloud-segmentation-consent-label"><input id="cloud-segmentation-consent" type="checkbox"> I agree to send this image and the required-object descriptions to SAM3 for segmentation. This may consume credits, even with local background repair.</label>
+              <label for="background-mode">Background repair attempt <span class="required">Required</span></label>
+              <select id="background-mode">
+                <option value="smooth">Local repair — best for smooth backgrounds</option>
+                <option value="telea">Local repair — small marks and text only</option>
+                <option value="flux">Cloud AI background fill — quality needs review</option>
+              </select>
+              <p class="field-note">Large holes may show blur or artifacts. These methods repair only the background, not hidden parts of overlapping objects. Full object reconstruction is not implemented yet.</p>
+              <label class="is-hidden" id="fill-prompt-label" for="fill-prompt">Background guidance <span class="optional">Optional</span></label>
+              <textarea class="is-hidden" id="fill-prompt" rows="3" placeholder="Continue the warm paper poster and tabletop. No text or drinks."></textarea>
+              <label class="consent is-hidden" id="cloud-fill-consent-label" for="cloud-fill-consent"><input id="cloud-fill-consent" type="checkbox"> I agree to use the configured external generative-fill service. It may consume credits.</label>
+              <button class="build-button" id="build-button" type="button">Build draft layers</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card result-card is-hidden" id="result-card">
+          <div class="step-number">03</div>
+          <div>
+            <p class="card-kicker">INSPECT BEFORE EXPORT</p>
+            <h2 id="result-title">Preparing your layered export…</h2>
+            <p id="result-copy" aria-live="polite">The local pipeline will create a PSD, a preview PNG, and the recipe used to build it.</p>
+          </div>
+          <div id="result-preview-wrap" class="result-preview is-hidden">
+            <p id="review-summary"></p><ul id="review-warnings"></ul>
+            <div class="inspection-tools"><button id="show-all" type="button">Show all layers</button><button id="background-only" type="button">Inspect background only</button><button id="reset-offsets" type="button">Reset preview positions</button></div>
+            <div id="layer-stage" class="layer-stage" aria-label="Layer inspection preview"></div>
+            <p class="field-note">Visibility and position controls are inspection-only; they do not change the exported PSD. Text layers are pixels, not editable fonts.</p>
+            <div id="layer-controls" class="layer-controls"></div>
+            <label class="consent"><input id="review-confirmed" type="checkbox"> I inspected the layers and accept this as an incomplete draft. Objects may remain grouped, text may be missed and repairs may be imperfect.</label>
+            <button id="accept-draft" type="button" class="build-button" disabled>Accept draft for download</button>
+          </div>
+          <button id="retry-status" class="is-hidden" type="button">Check processing status again</button>
+          <a id="download-link" class="download-link is-hidden" href="#">Download draft PSD package <span aria-hidden="true">↓</span></a>
+          <pre id="error-detail" class="error-detail is-hidden"></pre>
+        </div>
+      </section>
+
+      <footer>
+        <span>Layer Rebuild is an experimental local tool.</span>
+        <span>Draft reconstruction only. Full automatic separation and hidden-object completion have not passed acceptance testing.</span>
+      </footer>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>

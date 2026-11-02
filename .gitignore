@@ -1,0 +1,14 @@
+config.py
+.env
+.env.*
+!.env.example
+input/
+output/
+web_app/runtime_jobs/
+web_app/.runtime/
+__pycache__/
+*.py[cod]
+.venv/
+.DS_Store
+.playwright-mcp/
+.claude/settings.local.json

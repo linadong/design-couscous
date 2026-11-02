@@ -1,0 +1,12 @@
+# 核心依赖（pip 安装）。装完即可用：SAM3 抠图、颜色/前景抠取、smooth/telea 补背景、PSD、SVG。
+Pillow>=9.5
+requests>=2.31
+numpy>=1.26,<2.3
+opencv-python-headless>=4.9
+pytoshop>=1.2
+psd-tools>=1.17
+six>=1.16
+
+# 可选：LaMa 本地补背景（method=lama / auto 命中纹理时）。会带 torch（体积大）。
+# 不需要 lama 可不装：
+#   simple-lama-inpainting>=0.1.2
