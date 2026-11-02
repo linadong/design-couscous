@@ -1,5 +1,5 @@
-# 一键创建 conda 环境：  conda env create -f environment.yml
-# 之后：              conda activate sam3
+# Create the Conda environment: conda env create -f environment.yml
+# Activate it: conda activate sam3
 name: sam3
 channels:
   - defaults
@@ -8,5 +8,5 @@ dependencies:
   - pip
   - pip:
       - -r requirements.txt
-      # 想要 LaMa 本地补背景就取消下一行注释（会装 torch，较大）
+      # Uncomment for optional LaMa inpainting (also installs torch).
       # - simple-lama-inpainting>=0.1.2

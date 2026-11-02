@@ -1,7 +1,7 @@
 # Layer Rebuild local alpha
 
-This is an isolated, local-only UI for the existing `sam3-cutout` pipeline. It
-does not change or serve the personal portfolio website.
+This local-only interface helps prepare flattened print artwork for editing
+using the Layer Rebuild engine. Exported PSDs require review before print delivery.
 
 ## Run
 

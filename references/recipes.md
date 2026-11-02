@@ -1,71 +1,71 @@
-# Recipe reference
+# Recipe Reference
 
-## Recipe 字段
+## Fields
+
+The following JSONC example includes comments for explanation. Remove comments before saving a JSON recipe. Use absolute paths when invoking the engine from an agent; relative paths resolve against the process working directory.
 
 ```jsonc
 {
-  "image":  "input/demo.png",            // 原图
-  "output": "output/demo/demo.psd",      // 输出 PSD
-  "preview":"output/demo/_preview.png",  // 可选：合成预览 PNG
-  "flux_cache":"output/demo/_flux.png",  // 可选：缓存 Flux 背景，反复微调不烧额度
-
-  "elements": [                          // 要抠出的元素（每个一层）
-    { "prompt": "white detergent sheet", // ← SAM3 文字指令（你给）
-      "refine": true,                    //   GrabCut 精修边缘
-      "all_instances": false,            //   true=命中的多个实例都抠
-      "conf": 0.30 }                     //   置信度阈值
+  "image": "/absolute/task/source.png",
+  "output": "/absolute/task/result.psd",
+  "preview": "/absolute/task/preview.png", // Optional composite preview
+  "flux_cache": "/absolute/task/flux.png", // Optional cached FLUX background
+  "elements": [
+    {
+      "prompt": "white detergent sheet", // Semantic object description
+      "required": true,                  // Fail export if extraction misses
+      "refine": true,                    // GrabCut edge refinement
+      "all_instances": false,            // Set true to extract all matched instances
+      "conf": 0.30                       // Confidence threshold
+    }
   ],
-
-  "fill": {                              // 背景补全（移除上面元素后补背景）
-    "method": "auto",                    //   auto / flux / lama / telea
-    "prompt": "blooming lavender field"  // ← 填什么（你给）；给了 prompt 时 auto 会选 flux
-  },
-
-  "graphics": [                          // 可选：图标矢量化 / 文字转可编辑（需手给区域框）
-    { "name":"icon", "type":"icon", "box":[291,646,420,776],
-      "perfect_circle": true,            //   圆环用数学正圆重建
+  "fill": {"enabled": false},            // Background repair is optional
+  "graphics": [
+    {
+      "name": "icon", "type": "icon", "box": [291, 646, 420, 776],
+      "perfect_circle": true,             // Reconstruct a circular ring mathematically
       "remove_from_bg": true,
-      "vectorize": "output/demo/icon.svg" },
-    { "name":"DEEP_CLEANING", "type":"text", "box":[242,778,446,824],
-      "content":["DEEP","CLEANING"],     //   文字内容（你给）
-      "font":"/System/Library/Fonts/Avenir Next.ttc", "font_index":2,
-      "editable": true, "remove_from_bg": true }
+      "vectorize": "/absolute/task/icon.svg"
+    },
+    {
+      "name": "DEEP_CLEANING", "type": "text", "box": [242, 778, 446, 824],
+      "content": ["DEEP", "CLEANING"],
+      "font": "/absolute/path/to/installed-font.ttf", "font_index": 0,
+      "editable": true, "remove_from_bg": true
+    }
   ]
 }
 ```
 
-### 谁来给 / 谁自动
+Use coordinates and fonts appropriate to the actual image and environment; the example regions are illustrative. Create output directories before running. Graphics marked `remove_from_bg` are removed during enabled background repair; disabling repair preserves the source background.
 
-| 自动检测（不用填） | 你来给（写进 recipe / 对话） |
-|---|---|
-| 墨色（Otsu 采样暗部） | 抠图对象（SAM3 prompt） |
-| 圆心 / 半径 / 描边宽（HoughCircles） | 填充内容（Flux prompt） |
-| 文字行数 / 字号 / 位置（投影测量） | 图标/文字的区域框 `box`、字体、文字内容 |
-| 元素位置（模板匹配） | 图片 / 输出路径 |
+## Choosing Inputs
 
-> `graphics`（图标矢量化、文字转可编辑）需要手给 `box`，因为"哪块是图标/文字"
-> 因图而异。普通抠图+补背景**不需要** graphics 段。
+The agent supplies object prompts, image/output paths, graphic bounding boxes, and any text content or fonts. Suitable image-processing helpers estimate ink color, circle geometry, text layout, and element placement. Review their results rather than assuming every image can be reconstructed accurately.
 
-### 补背景方法：`method: "auto"` 自动选
+`graphics` is optional for ordinary object extraction. Use it when extracting bounded graphics or reconstructing text. Boxes use image pixels: `[left, top, right, bottom]`.
 
-脚本会先分析待填充区域再决定（`choose_fill_method`）：
+## Background Repair
 
-| 情况 | 自动选 | 为什么 |
+Omit `fill` or set `{"enabled": false}` to preserve the original background. To enable repair, use a fill configuration such as `{"enabled": true, "method": "smooth"}`.
+
+With `method: "auto"`, `choose_fill_method` selects a method based on the prompt and image region:
+
+| Condition | Method | Purpose |
 |---|---|---|
-| 给了 `fill.prompt` | **flux** | 意图是生成新内容（如 demo1 水→薰衣草） |
-| 无提示词 + 区域细小（文字/线条/碎块） | **telea** | 经典修复最干净最快 |
-| 无提示词 + 较大空缺 + 背景**平滑/渐变** | **smooth** | 金字塔平滑填充，颜色正确无糊斑（如 demo2 大片渐变） |
-| 无提示词 + 较大空缺 + 背景**有可续接纹理** | **lama** | 续接重复结构/纹理，免费、不脑补 |
+| A `fill.prompt` is supplied | flux | Generate new content using an external service |
+| No prompt; small gaps such as text or thin lines | telea | Local repair of small regions |
+| No prompt; larger gap on a smooth or gradient background | smooth | Local smooth-background reconstruction |
+| No prompt; larger gap with repeatable texture | lama | Local texture inpainting; optional dependency |
 
-可在 recipe 里写死 `flux` / `lama` / `smooth` / `telea` 覆盖自动判断；
-`fill.dilate`(默认10) 调外扩盖阴影、`fill.guidance` 调 Flux 强度。
+Set `flux`, `lama`, `smooth`, or `telea` explicitly to override automatic selection. `fill.dilate` (default 10) expands the object mask to cover surrounding shadows; `fill.guidance` controls FLUX guidance.
 
-> 经验：**平滑渐变背景**用 smooth，**有纹理可续接**用 lama，**创造/替换内容**用 flux（给 prompt）。
-> 注意：生成式 Flux 在"产品包装"这类强语境图上做"还原"会脑补出产品，**还原优先 smooth/lama**。
+FLUX may invent product-like details when repairing packaging imagery. Prefer smooth or lama when suitable for background restoration. Generative repair is not a guarantee of accurate reconstruction. Obtain authorization for external uploads and possible API charges before using FLUX or SAM3.
 
-## 单独抠图（不进 PSD）
+## Standalone Cutouts Without PSD Export
 
 ```bash
-conda run -n sam3 python sam3_cutout.py input/x.png "按钮" "图标" --refine
+.venv/bin/python sam3_cutout.py /absolute/task/source.png "button" "icon" --refine
 ```
 
+Run from a writable task directory; standalone cutouts are saved under `output/<image-name>/` relative to that directory.
